@@ -18,11 +18,19 @@
  */
 
 
+
+//print "<br> <br><br><br><br><br> This is the path of the files path " . ABSPATH;
+//print "<pre>";
+//print_r($_SERVER);
+//print "</pre>";
+//exit;
+
 require_once(ABSPATH . "/wp-includes/user.php");
-require_once(ABSPATH . "/wp-includes/pluggable.php.");
-require_once( "helper.php" );
+require_once(ABSPATH . "/wp-includes/pluggable.php");
+require_once(ABSPATH . "/wp-content/plugins/Spgateway/helper.php" );
 
 
+//exit;
 
 add_action('plugins_loaded', 'spgateway_gateway_init', 0);
 add_action('phpmailer_init', 'spg_mailtrap');

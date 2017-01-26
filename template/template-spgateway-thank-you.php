@@ -4,28 +4,43 @@
  * Template Name: Sendright Registration - thank you page
  */
 
-wp_head();
+		wp_head();
 
-	if(!session_id()) {
-		session_start();
-	}
-
-//		print "this is the thank you page file";
-//		error_reporting(1);
-//	 	print "spgateway response";
+		if(!session_id()) {
+			session_start();
+		}
+		//		print "this is the thank you page file";
+		//		error_reporting(1);
+		//	 	print "spgateway response";
 		$orderId = (!empty($_GET['orderId'])) ? $_GET['orderId'] : null;
 		$orderStatus = (!empty($_POST['Status'])) ? strtolower($_POST['Status']) : null;
+		$invalidRequestUrl = get_site_url() . "/invalid-request" ;
+		$url = 'http://sendright.net/user/registration/create';
+//		$url = 'http://localhost/rocky/send-right-dev/user/registration/user/registration/create';
+//		$url = 'http://google-calendar.hopto.org/rocky/send-right-dev/user/registration/create';
+		$password = 'sendright';
+		$shopUrl = get_site_url() . '/shop';
+		$email = '';
+		$firstName = '';
+		$lastName = '';
+		$sendRightLogin = 'http://www.sendright.net/login';
+		$sendRightForgotPassword = 'http://www.sendright.net/password/reset';
 
-		if($orderStatus == 'success') {
-			print "<br> this request is valid and create sendright account will executed";
-		} else {
-			 ?>
-					<script>
-						document.location = 'not-valid-request';
-					</script>
-				<?php
-//			print "<br> this request is not valid and need to show an error or redirect to another page because no payment was made";
-		}
+
+//if(false) {
+	if ($orderStatus == 'success') {
+		// print "<br> this request is valid and create sendright account will executed";
+	} else {
+		?>
+		<script>
+			var invalidRequestUrl = '<?php print $invalidRequestUrl; ?>';
+			document.location = invalidRequestUrl;
+		</script>
+		<?php
+		// print "<br> this request is not valid and need to show an error or redirect to another page because no payment was made";
+	}
+//}
+
 
 		// 		print "<pre>";
 		//		print "post";
@@ -41,16 +56,10 @@ wp_head();
 		//		foreach ( WC()->cart->get_cart() as $cart) {
 		//			print_r($cart);
 		//		}
-
-
-
-		$email 	   = '';
-		$firstName = '';
-		$lastName  = '';
-
 		//print "<br> billing address<br>";
 		// $billingAddress = WC()->cart->ship_to_billing_address_only();
 		// get order id
+//		print "order id " . $orderId;
 		global $wpdb; // Get the global $wpdb
 		$order_id = $orderId;
 		$table = $wpdb->prefix . 'postmeta';
@@ -67,15 +76,13 @@ wp_head();
 				$lastName = $res->meta_value;   // get billing first name
 			}
 		}
-		$password = 'sendright';
-//		 print "<br>Email $email  | First Name:  $firstName Last Name: $lastName password $password";
+		//		 print "<br>Email $email  | First Name:  $firstName Last Name: $lastName password $password";
 		 print "</pre>";
+
+//		$email = 'testNewEmail123@gmail.com';
+		// add membership
 		?>
 	<?php
-
-
-	$url = 'http://localhost/rocky/send-right-dev/user/registration/create';
-//	$url = 'http://sendright.net/user/registration/create';
 
 
 	?>
@@ -108,6 +115,9 @@ wp_head();
 
 		<script>
 			$(document).ready(function(){
+
+
+				$("#sendright-loader").css('display','block');
 				console.log("document is ready");
 
 				var firstName = '<?php print $firstName; ?>';
@@ -115,36 +125,72 @@ wp_head();
 				var email     = '<?php print $email; ?>';
 				var password  = '<?php print $password; ?>';
 				var url  	  = '<?php print $url; ?>';
-				var param 	  =  url + "/" + email + "/" +  firstName +  "" + lastName + "/" + password;
+				var param 	  =  url + "/" + email + "/" +  firstName +  " " + lastName + "/" + password;
 				console.log(" fname " + firstName +  " lname " + lastName + " email " + email + " pass" + password + " param " + param);
-				$.get( param, function( data ) {
-					//				$("#spgateway-sendright-status").html("Successfully created account in sendright.net");
-					//				if(data == 'ok') {
-					//					$("#spgateway-sendright-status").html("Successfully created account in sendright.net");
-					//				} else {
-					//					$("#spgateway-sendright-status").html("Account no created in sendright.net this may because of conflict.");
-					//				}
+				var jqxhr = $.get( param, function( data ) {
+
+//					alert("success 1" + data);
+				})
+				.done(function() {
+
+//					alert("success 2" + data);
+//					$("#sendriht-create-account-success").css('display','block');
+				})
+				.fail(function(data) {
+
+//					alert("error" + data);
+//					if(data == 'ok') {
+//						alert("result is ok");
+//					} else {
+//						alert("result is not ok");
+//					}
+//					$("#sendriht-create-account-failed").css('display','block');
+				})
+				.always(function() {
+
+//					alert("always");
+					$("#sendright-loader").css('display','none');
+					$("#sendriht-create-account-success").css('display','block');
 				});
 			});
 		</script>
 	</head>
 	<body>
 		<div class="container">
-
-
+			<br><br>
 			<div class="jumbotron">
-				<h1>Hello, world!</h1>
-				<p>...</p>
-				<p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p>
+				<h1>Success! your order is now processing..</h1><br>
+				<p><a class="btn btn-primary btn-lg" href="#" role="button">View invoice..</a></p>
 			</div>
-			<div class="alert alert-success">
-				Thank you, your oder is processing now.<br>
-			</div>
-			We created senright account for you <br>
-			Below is your login information: <br>
-			  Username:  <?php print $email;  ?>  <br>
 
-			 Password:   <?php print $password;  ?>  <br>
+
+			<div class="list-group" id="sendriht-create-account-success" style="display:none">
+				<div class="alert alert-success">
+					Congratulation, We created sendright account for you! please check information below.
+				</div>
+
+				<a href="#" class="list-group-item disabled">
+					Send Right Account Information
+				</a>
+				<span class="list-group-item">Email: <?php print $email;  ?>  <br></span>
+				<span class="list-group-item">Password:  <?php print $password;  ?>  <br></span>
+				<span class="list-group-item">go to  http://www.sendright.net &nbsp; <a  href="<?php print $sendRightLogin; ?>" target="_blank"> login </a> <br></span>
+			</div>
+
+
+			<div class="alert alert-danger" style="display:none" id="sendriht-create-account-failed">
+				Ohps, something wrong, maybe you already have account to sendright, please contact sendright administrator or try to forgot your password using <?php print $email;  ?> email address, please visit <a href="<?php print $sendRightForgotPassword; ?>"> here </a> to reset password.
+			</div>
+
+			<div id="sendright-loader" >
+				Checking sendright account and create.. <br>
+				<i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
+			</div>
+
+			<br>
+			<a href="<?php print $shopUrl; ?>">
+				<button class="btn btn-default">Go back to shop</button>
+			</a>
 
 		</div>
 	</body>
@@ -154,3 +200,29 @@ wp_head();
 <?php
 wp_footer();
 ?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

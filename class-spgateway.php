@@ -16,8 +16,18 @@
  * @author 	Pya2go Chael
  * @author  Spgateway Geoff
  */
-add_action('plugins_loaded', 'spgateway_gateway_init', 0); 
+
+
+require_once(ABSPATH . "/wp-includes/user.php");
+require_once(ABSPATH . "/wp-includes/pluggable.php.");
+require_once( "helper.php" );
+
+
+
+add_action('plugins_loaded', 'spgateway_gateway_init', 0);
 add_action('phpmailer_init', 'spg_mailtrap');
+
+
 function spg_mailtrap($phpmailer) {
      $phpmailer->isSMTP();
      $phpmailer->Host = 'mailtrap.io';
@@ -287,14 +297,85 @@ function spgateway_gateway_init() {
                 "Receiver" => $buyer_name, //支付寶、財富通參數
                 "Tel1" => $tel, //支付寶、財富通參數
                 "Tel2" => $tel, //支付寶、財富通參數
-                "LangType" => $this->LangType
+                "LangType" => $this->LangType,
+                'CREDIT' => true,
+                'UNIONPAY' => false,
+                'WEBATM' => false,
+                'VACC'=>false,
+                'CVS'=>false,
+                'BARCODE'=>false
             );
 
             $spgateway_args = array_merge($spgateway_args_1, $spgateway_args_2);
             $spgateway_args = apply_filters('woocommerce_spgateway_args', $spgateway_args);
             return $spgateway_args;
         }
-   
+        /**
+         * Generate the spgateway button link (POST method)
+         *
+         * @access public
+         * @param mixed $order_id
+         * @return string
+         */
+        function generate_spgateway_form($order_id) {
+
+            global $woocommerce;
+            $order = new WC_Order($order_id);
+            $spgateway_args = $this->get_spgateway_args($order);
+            $item_name = $order->get_items();
+            $sendRightKeyWord = 'sendright';
+            $name = '';
+            $items = $order->get_product_from_item( $item_name );
+            //             $_product = wc_get_product(  66 );
+            //            foreach($item_name as $key => $value) {
+            //                print " test " . $value['product_id'];
+            //            }
+            // get setup return url for sendright
+            $spgateway_args['ReturnURL'] = spgateway_set_return_url(['itemName'=>$item_name, 'sendRightKeyWord'=>$sendRightKeyWord, 'orderId'=>$order_id]);
+
+            // create user's account
+            $customerInfo = spgateway_get_customer_info($order_id);
+            $status = spgateway_createNewWpUser( [
+                'first_name'=>$customerInfo['firstName'],
+                'last_name'=> $customerInfo['lastName'],
+                'user_email'=>$customerInfo['email'],
+                'user_login' =>$customerInfo['email'],
+                'display_name'=>$customerInfo['firstName'] . ' ' . $customerInfo['lastName']
+            ]);
+
+
+//            $pa_koostis_value = get_post_meta($product->id);
+
+
+             // make filter to detect if this is sendright product then if so, we need to redirect to thank you page
+             // for sendright registration
+             // $spgateway_args['ReturnURL'] = get_site_url() . '/thank-you?orderId='.$order_id;
+//                         print "<pre>";
+             // print "product title " . $spgateway_args['Title1'];
+             // print "spgateway arg";
+            //                         print_r($_product);
+            //                         print_r($item_nam);
+                                     print_r($spgateway_args);
+            //                         print_r($order);
+//                                     print "</pre>";
+            //                         exit;
+//                         exit;
+            $spgateway_gateway = $this->gateway;
+            $spgateway_args_array = array();
+            foreach ($spgateway_args as $key => $value) {
+                $spgateway_args_array[] = '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '" />';
+            }
+
+
+            // create users account
+
+
+
+
+            return '<form id="spgateway" name="spgateway" action=" ' . $spgateway_gateway . ' " method="post" target="_top">' . implode('', $spgateway_args_array) . '
+				<input type="submit" class="button-alt" id="submit_spgateway_payment_form" value="' . __('前往 spgateway 支付頁面', 'spgateway') . '" />
+				</form>' . "<script>setTimeout(\"document.forms['spgateway'].submit();\",\"3000\")</script>";
+        }
         /**
          * Output for the order received page.
          *
@@ -388,9 +469,11 @@ function spgateway_gateway_init() {
                 isset($order) && $order->cancel_order();
                 echo "交易失敗，請重新填單<br>錯誤代碼：" . $_REQUEST['Status'] . "<br>錯誤訊息：" . $_REQUEST['Message'];
             }
- 
+
             print "<h1> Send Invoice to customer<h1>"; 
-            print "<h1> Display design for thank you page</h1>"; 
+            print "<h1> Display design for thank you page</h1>";
+
+//            exit;
         }
 
         function addpadding($string, $blocksize = 32) {
@@ -486,42 +569,7 @@ function spgateway_gateway_init() {
             }
         }
 
-        /**
-         * Generate the spgateway button link (POST method)
-         *
-         * @access public
-         * @param mixed $order_id
-         * @return string
-         */
-        function generate_spgateway_form($order_id) {
-            global $woocommerce;
-            $order = new WC_Order($order_id);
 
-            $spgateway_args = $this->get_spgateway_args($order);
-
-            // make filter to detect if this is sendright product then if so, we need to redirect to thank you page
-            // for sendright registration
-
-            //            $spgateway_args['ReturnURL'] = get_site_url() . '/thank-you?orderId='.$order_id;
-
-//                        print "<pre>";
-//                        print "product title " . $spgateway_args['Title1'];
-//                        print "spgateway arg";
-//                        print_r($spgateway_args);
-//                        print "</pre>";
-
-            // exit;
-//             exit;
-            $spgateway_gateway = $this->gateway;
-            $spgateway_args_array = array();
-            foreach ($spgateway_args as $key => $value) {
-                $spgateway_args_array[] = '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '" />';
-            }
-
-            return '<form id="spgateway" name="spgateway" action=" ' . $spgateway_gateway . ' " method="post" target="_top">' . implode('', $spgateway_args_array) . '
-				<input type="submit" class="button-alt" id="submit_spgateway_payment_form" value="' . __('前往 spgateway 支付頁面', 'spgateway') . '" />
-				</form>' . "<script>setTimeout(\"document.forms['spgateway'].submit();\",\"3000\")</script>";
-        }
 
         /**
          * Output for the order received page.

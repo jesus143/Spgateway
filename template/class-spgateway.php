@@ -8,7 +8,7 @@
  * Version: 1.0.0
  * Author URI: http://www.spgateway.com/
  * Author: 智付通 spgateway
- * Plugin Name:   Spgateway Credit Card Payment
+ * Plugin Name:   spgateway Development
  * @class 		spgateway
  * @extends		WC_Payment_Gateway
  * @version
@@ -64,10 +64,10 @@ function spgateway_gateway_init() {
               $_POST['woocommerce_spgateway_ExpireDate'] = 7;
             }
 
-            $this->id = 'spgateway_credit_card';
+            $this->id = 'spgateway';
             $this->icon = apply_filters('woocommerce_spgateway_icon', plugins_url('icon/spgateway.png', __FILE__));
             $this->has_fields = false;
-            $this->method_title = __('Spgateway Credit Card', 'woocommerce');
+            $this->method_title = __('spgateway', 'woocommerce');
 
             // Load the form fields.
             $this->init_form_fields();
@@ -120,7 +120,7 @@ function spgateway_gateway_init() {
                     'title' => __('標題', 'woocommerce'),
                     'type' => 'text',
                     'description' => __('客戶在結帳時所看到的標題', 'woocommerce'),
-                    'default' => __('Spgateway Credit Card', 'woocommerce')
+                    'default' => __('spgateway', 'woocommerce')
                 ),
                 'LangType' => array(
                     'title' => __('支付頁語系', 'woocommerce'),
@@ -318,8 +318,6 @@ function spgateway_gateway_init() {
             $spgateway_args = apply_filters('woocommerce_spgateway_args', $spgateway_args);
             return $spgateway_args;
         }
-
-
         /**
          * Generate the spgateway button link (POST method)
          *
@@ -354,22 +352,22 @@ function spgateway_gateway_init() {
             ]);
 
 
-            //            $pa_koostis_value = get_post_meta($product->id);
+//            $pa_koostis_value = get_post_meta($product->id);
 
 
              // make filter to detect if this is sendright product then if so, we need to redirect to thank you page
              // for sendright registration
              // $spgateway_args['ReturnURL'] = get_site_url() . '/thank-you?orderId='.$order_id;
-                        print "<pre>";
+//                         print "<pre>";
              // print "product title " . $spgateway_args['Title1'];
              // print "spgateway arg";
             //                         print_r($_product);
             //                         print_r($item_nam);
-           print_r($spgateway_args);
+                                     print_r($spgateway_args);
             //                         print_r($order);
-                                                print "</pre>";
-                                    // exitit;
-                        // exit;
+//                                     print "</pre>";
+            //                         exit;
+//                         exit;
             $spgateway_gateway = $this->gateway;
             $spgateway_args_array = array();
             foreach ($spgateway_args as $key => $value) {
@@ -383,11 +381,9 @@ function spgateway_gateway_init() {
 
 
             return '<form id="spgateway" name="spgateway" action=" ' . $spgateway_gateway . ' " method="post" target="_top">' . implode('', $spgateway_args_array) . '
-  				    <input type="submit" class="button-alt" id="submit_spgateway_payment_form" value="' . __('前往 spgateway 支付頁面', 'spgateway') . '" />
-  				    </form>' . "<script>setTimeout(\"document.forms['spgateway'].submit();\",\"3000\")</script>";
+				<input type="submit" class="button-alt" id="submit_spgateway_payment_form" value="' . __('前往 spgateway 支付頁面', 'spgateway') . '" />
+				</form>' . "<script>setTimeout(\"document.forms['spgateway'].submit();\",\"3000\")</script>";
         }
-
-
         /**
          * Output for the order received page.
          *
@@ -488,17 +484,12 @@ function spgateway_gateway_init() {
            exit;
         }
 
-
-
         function addpadding($string, $blocksize = 32) {
             $len = strlen($string);
             $pad = $blocksize - ($len % $blocksize);
             $string .= str_repeat(chr($pad), $pad);
             return $string;
         }
-
-
-
 
         function curl_work($url = "", $parameter = "") {
             $curl_options = array(
@@ -528,8 +519,6 @@ function spgateway_gateway_init() {
             );
             return $return_info;
         }
-
-
 
         function receive_response() {  //接收回傳參數驗證
             $re_MerchantOrderNo = trim($_REQUEST['MerchantOrderNo']);

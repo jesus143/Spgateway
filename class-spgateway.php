@@ -1,5 +1,7 @@
 <?php
-
+if(!session_id()) {
+    session_start();
+}
 // print "<H1> tESTING PLUGIN </H1>";
 /**
  * spgateway Payment Gateway
@@ -341,8 +343,8 @@ function spgateway_gateway_init() {
             //                print " test " . $value['product_id'];
             //            }
             // get setup return url for sendright
-            $spgateway_args['ReturnURL'] = spgateway_set_return_url(['itemName'=>$item_name, 'sendRightKeyWord'=>$sendRightKeyWord, 'orderId'=>$order_id]);
-
+//            $spgateway_args['ReturnURL'] = spgateway_set_return_url(['itemName'=>$item_name, 'sendRightKeyWord'=>$sendRightKeyWord, 'orderId'=>$order_id]);
+            $spgateway_args['ReturnURL'] = '';
             // create user's account
             $customerInfo = spgateway_get_customer_info($order_id);
             $status = spgateway_createNewWpUser( [
@@ -365,11 +367,13 @@ function spgateway_gateway_init() {
              // print "spgateway arg";
             //                         print_r($_product);
             //                         print_r($item_nam);
-           print_r($spgateway_args);
+            $_SESSION['spgateway_args'] = $spgateway_args;
+//           print_r($_SESSION['spgateway_args']);
             //                         print_r($order);
-                                                print "</pre>";
-                                    // exitit;
-                        // exit;
+            print "</pre>";
+            // exitit;
+            //  exit;
+            
             $spgateway_gateway = $this->gateway;
             $spgateway_args_array = array();
             foreach ($spgateway_args as $key => $value) {
@@ -379,7 +383,7 @@ function spgateway_gateway_init() {
 
             // create users account
 
-
+//            exit;
 
 
             return '<form id="spgateway" name="spgateway" action=" ' . $spgateway_gateway . ' " method="post" target="_top">' . implode('', $spgateway_args_array) . '
@@ -482,10 +486,9 @@ function spgateway_gateway_init() {
                 echo "交易失敗，請重新填單<br>錯誤代碼：" . $_REQUEST['Status'] . "<br>錯誤訊息：" . $_REQUEST['Message'];
             }
 
-            print "<h1> Send Invoice to customer<h1>"; 
-            print "<h1> Display design for thank you page</h1>";
-
-           exit;
+            //            print "<h1> Send Invoice to customer<h1>";
+            //            print "<h1> Display design for thank you page</h1>";
+            //           exit;
         }
 
 

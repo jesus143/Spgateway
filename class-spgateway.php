@@ -20,6 +20,18 @@ if(!session_id()) {
  */
 
 
+/**
+ * Process the checkout
+ */
+//add_action('woocommerce_checkout_process', 'my_custom_checkout_field_process');
+//
+//function my_custom_checkout_field_process() {
+//    // Check if set, if its not set add an error.
+//    if ( ! $_POST['my_field_name'] )
+//        wc_add_notice( __( $_POST['CreditInstallment'] . 'Please enter something into this new shiny field.' ), 'error' );
+//}
+
+
 
 //print "<br> <br><br><br><br><br> This is the path of the files path " . ABSPATH;
 //print "<pre>";
@@ -34,7 +46,121 @@ require_once(ABSPATH . "/wp-content/plugins/Spgateway/helper.php" );
 
 //exit;
 
+
+
+
+
+
+
+// Hook in
+//add_filter( 'woocommerce_checkout_fields' , 'set_input_attrs' );
+//
+//// Our hooked in function - $fields is passed via the filter!
+//function set_input_attrs( $fields ) {
+//    $fields['billing']['billing_email']['type'] = 'email';
+//    $fields['billing']['billing_phone']['type'] = 'tel';
+//    $fields['billing']['billing_postcode']['type'] = 'tel';
+//    $fields['shipping']['shipping_postcode']['type'] = 'tel';
+//
+//    return $fields;
+//}
+//
+
+//
+//add_action("woocommerce_before_checkout_form", "custom_before_checkout_action");
+//function custom_before_checkout_action() {
+////    if (isset($_GET["quote"]) && $_GET["quote"] == "1") {
+////        echo '<h2>Request for Quote</h2>';
+////        WC()->session->set("quote","true");
+////    }
+////    else {
+////        WC()->session->set("quote","false");
+////        echo '<h2>Buy Sample</h2>';
+////    }
+//}
+//
+//add_filter('woocommerce_available_payment_gateways','filter_gateways',1);
+//function filter_gateways($gateways){
+//
+//    if (WC()->session->get("quote") == "true")
+//        unset($gateways['bacs']);
+//    else
+//        unset($gateways['cod']);
+//
+//    return $gateways;
+//}
+////
+//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//
+//function kia_filter_checkout_fields($fields){
+//    $fields['extra_fields'] = array(
+//        'some_field' => array(
+//            'type' => 'text',
+//            'required'      => true,
+//            'label' => __( 'Some field' )
+//        ),
+//        'another_field' => array(
+//            'type' => 'select',
+//            'options' => array( 'a' => __( 'apple' ), 'b' => __( 'bacon' ), 'c' => __( 'chocolate' ) ),
+//            'required'      => true,
+//            'label' => __( 'Another field' )
+//        )
+//    );
+//
+//    return $fields;
+//}
+//add_filter( 'woocommerce_checkout_fields', 'kia_filter_checkout_fields');
+//
+//
+//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 add_action('plugins_loaded', 'spgateway_gateway_init', 0);
+
 add_action('phpmailer_init', 'spg_mailtrap');
 
 
@@ -48,11 +174,35 @@ function spg_mailtrap($phpmailer) {
 }
 
 function spgateway_gateway_init() {
+
+
+
+
     if (!class_exists('WC_Payment_Gateway')) {
         return;
     }
 
+
+    /**
+     * Add the gateway to WooCommerce
+     *
+     * @access public
+     * @param array $methods
+     * @package		WooCommerce/Classes/Payment
+     * @return array
+     */
+    function add_spgateway_gateway($methods) {
+        $methods[] = 'WC_spgateway';
+        return $methods;
+    }
+
+    add_filter('woocommerce_payment_gateways', 'add_spgateway_gateway');
+
+
+
     class WC_spgateway extends WC_Payment_Gateway {
+
+        protected $productId = 0;
 
         /**
          * Constructor for the gateway.
@@ -234,6 +384,69 @@ function spgateway_gateway_init() {
             <?php
         }
 
+
+        protected function print_installment_pay($productId)
+        {
+
+            $actual_link = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+            $installmentForm = '';
+            $installment = $this->spgateway_get_installments($productId);
+            // $installmentForm = "<b>Select card installment type</b><br>";
+            // $installmentForm .= '<form name="spgateway_installment_form"  action="'.$actual_link.'" method="post" >';
+
+            if(!empty($installment)) {
+                foreach ($installment as $key => $value) {
+
+                    $display_name = '';
+                    if ($value == 'default') {
+                        $value = 'pay full';
+
+                    } else {
+                        $display_name = ' monthly pay';
+                    }
+
+                    if ($key == 0) {
+                        $installmentForm .= '<input type="radio" name="spgateway_cc_installment_pay" value="' . $value . '" checked/> ' . $value . $display_name . '<br>';
+                    } else {
+                        $installmentForm .= '<input type="radio" name="spgateway_cc_installment_pay" value="' . $value . '" /> ' . $value . $display_name . '<br>';
+                    }
+                }
+                // $installmentForm  .= '<br><input type="submit" value="Choose" name="spgateway_cc_submit"/>';
+                // $installmentForm .= '</form>';
+            }
+            return $installmentForm;
+        }
+
+
+        protected function submit_choose_installment_pay()
+        {
+            $installment = $_POST;
+            $spgateway_args = [];
+
+            if(isset($installment['spgateway_cc_submit'])) {
+//                print_r( $installment);
+                if ($installment['spgateway_cc_installment_pay'] != 'pay full') {
+                    // full pay
+
+                    return $installment['spgateway_cc_installment_pay'];
+
+                }else {
+                    return false;
+                }
+            }
+        }
+
+        protected function spgateway_get_installments($productId)
+        {
+           return get_post_meta($productId, 'credit_installments', true );
+
+//            print_r($key_1_value);
+                        // Check if the custom field has a value.
+            //            if ( ! empty( $key_1_value ) ) {
+            //                return unserialize($key_1_value);
+            //            }
+        }
+
         /**
          * Get spgateway Args for passing to spgateway
          *
@@ -244,6 +457,9 @@ function spgateway_gateway_init() {
          * MPG參數格式
          */
         function get_spgateway_args($order) {
+
+
+
 
             global $woocommerce;
 
@@ -258,6 +474,7 @@ function spgateway_gateway_init() {
             $item_name = $order->get_items();
             $item_cnt = 1;
             $itemdesc = "";
+
             foreach ($item_name as $item_value) {
                 if ($item_cnt != count($item_name)) {
                     $itemdesc .= $item_value['name'] . " × " . $item_value['qty'] . "，";
@@ -331,6 +548,18 @@ function spgateway_gateway_init() {
          */
         function generate_spgateway_form($order_id) {
 
+
+
+
+            //            print "<pre>";
+            //            print "post";
+            //            print_r($_POST);
+            //            print "session";
+            //            print_r($_SESSION);
+            //            print "cokie";
+            //            print_r($_COOKIE);
+            //            exit;
+            error_reporting(0);
             global $woocommerce;
             $order = new WC_Order($order_id);
             $spgateway_args = $this->get_spgateway_args($order);
@@ -362,34 +591,67 @@ function spgateway_gateway_init() {
              // make filter to detect if this is sendright product then if so, we need to redirect to thank you page
              // for sendright registration
              // $spgateway_args['ReturnURL'] = get_site_url() . '/thank-you?orderId='.$order_id;
-                        print "<pre>";
+             //  print "<pre>";
              // print "product title " . $spgateway_args['Title1'];
              // print "spgateway arg";
             //                         print_r($_product);
             //                         print_r($item_nam);
             $_SESSION['spgateway_args'] = $spgateway_args;
-//           print_r($_SESSION['spgateway_args']);
-            //                         print_r($order);
-            print "</pre>";
-            // exitit;
-            //  exit;
-            
+
+
+            //            print_r($_POST);
+
+
+            $this->productId = $spgateway_args['Pid1'];
+
+            //            if(!empty($this->spgateway_get_installments($spgateway_args['Pid1'])) and count($_POST) < 1) {
+            //                //
+            //                print "<b>Please select your installment plan.</b><br>";
+            //                //                print "create form ";
+            //
+            //
+            //                print $this->print_installment_pay($spgateway_args['Pid1']);
+            //                $installmentOption = $this->submit_choose_installment_pay();
+            //                //                print "installment flag " .   $installmentOption;
+            //                if (!empty($installmentOption)) {
+            //                    $spgateway_args['InstFlag'] = $installmentOption;
+            //                }
+            //                return false;
+            //            } else {
+            //
+            //                $spgateway_args['InstFlag'] = $this->submit_choose_installment_pay();
+            //                if(!empty($spgateway_args['InstFlag'])) {
+            //                    $spgateway_args['CREDIT'] = 0;
+            //                }
+            //                //                print "no create form";
+            //                //                $spgateway_args['InstFlag'] = '';
+            //            }
+
+
+
+            $installment = (!empty($_SESSION['spgateway_payment_gateway_installment_choice'])) ? $_SESSION['spgateway_payment_gateway_installment_choice'] : null;
+            if($installment != 'pay full' and !empty($installment)) {
+                $spgateway_args['InstFlag'] = $installment;
+                $spgateway_args['CREDIT'] = 0;
+            }
+
+
+
+
+                //            print_r( $spgateway_args);
+                //            exit ;
             $spgateway_gateway = $this->gateway;
             $spgateway_args_array = array();
             foreach ($spgateway_args as $key => $value) {
                 $spgateway_args_array[] = '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '" />';
             }
 
-
-            // create users account
-
-//            exit;
-
-
             return '<form id="spgateway" name="spgateway" action=" ' . $spgateway_gateway . ' " method="post" target="_top">' . implode('', $spgateway_args_array) . '
   				    <input type="submit" class="button-alt" id="submit_spgateway_payment_form" value="' . __('前往 spgateway 支付頁面', 'spgateway') . '" />
-  				    </form>' . "<script>setTimeout(\"document.forms['spgateway'].submit();\",\"3000\")</script>";
+  				    </form>' . "<script>setTimeout(\"document.forms['spgateway'].submit();\",\"100\")</script>";
         }
+
+
 
 
         /**
@@ -600,7 +862,7 @@ function spgateway_gateway_init() {
          * @return void
          */
         function receipt_page($order) {
-            echo '<p>' . __('3秒後會自動跳轉到spgateway支付頁面，或者按下方按鈕直接前往<br>', 'spgateway') . '</p>';
+//            echo '<p>' . __('Please select <br>', 'spgateway') . '</p>';
             echo $this->generate_spgateway_form($order);
         }
 
@@ -630,29 +892,67 @@ function spgateway_gateway_init() {
          * @access public
          * @return void
          */
-        function payment_fields() {
-            if ($this->description)
-                echo wpautop(wptexturize($this->description));
-        }
+         public function payment_fields() {
+
+             // call global variable from woocomerece
+             global $woocommerce;
+
+             // call content of the current cart
+             $items = $woocommerce->cart->get_cart();
+
+             // print desccription of the payment gateway
+             if ($this->description) {
+                 echo wpautop(wptexturize($this->description));
+             }
+
+             // now lets display the html fields, this is the radio buttons
+             foreach($items as $item => $values) {
+                 $productId = $values['product_id'];
+                 $installmentOptions = $this->print_installment_pay($productId);
+                 break;
+             }
+             print $installmentOptions;
+
+         }
+
 
         function check_spgateway_response() {
             echo "ok";
         }
     }
+}
 
-    /**
-     * Add the gateway to WooCommerce
-     *
-     * @access public
-     * @param array $methods
-     * @package		WooCommerce/Classes/Payment
-     * @return array
-     */
-    function add_spgateway_gateway($methods) {
-        $methods[] = 'WC_spgateway';
-        return $methods;
+
+// so this is the code to manipulate of all of your post request
+// in check out page in woocomerce
+// just paste this code anywhere in your plugin or functions.php
+// and customize the post data
+// add in session so that you can use it anywhere of the site
+add_action('woocommerce_checkout_process', 'spgateway_checkout_field_process');
+
+function spgateway_checkout_field_process() {
+
+    // pass the post variable into a session so that we can use it in another page
+    $_SESSION['spgateway_payment_gateway_installment_choice'] = $_POST['spgateway_cc_installment_pay'];
+
+    /// show an error if something wrong in the field, lets put the session so that we can see the data in the post
+    if(!$_POST['spgateway_cc_installment_pay']) {
+        wc_add_notice(__('Please select installment plan!'), 'error');
     }
 
-    add_filter('woocommerce_payment_gateways', 'add_spgateway_gateway');
 }
+
+
+/**
+ * Proper way to enqueue scripts and styles.
+ */
+//function spgateway_scripts() {
+//    wp_enqueue_script( 'spgateway-jquery-cdn', 'https://code.jquery.com/jquery-3.1.1.min.js', array(), '1.0.0', true );
+//    wp_enqueue_script( 'spgateway-jquery-custom', 'http://google-calendar.hopto.org/wp-content/plugins/Spgateway/public/js/custom_jquery.js', array(), '1.0.0', true );
+//}
+//add_action( 'wp_enqueue_scripts', 'spgateway_scripts' );
+//
+
+
 ?>
+

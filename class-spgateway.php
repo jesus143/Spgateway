@@ -20,158 +20,24 @@ if(!session_id()) {
  */
 
 
+
 /**
- * Process the checkout
+ * Requirements:
+ * This plugin require a template for the response, currently template located at
+ * spgateway-manage-response plugin name and you can just copy the template file there and add to theme folder
+ * current active then u need to create a page name "spgateway payment response" and url link should like this
+ * http://demo4.iamrockylin.com/spgateway-payment-response/ after the product purchase here spgateway will redirect
  */
-//add_action('woocommerce_checkout_process', 'my_custom_checkout_field_process');
-//
-//function my_custom_checkout_field_process() {
-//    // Check if set, if its not set add an error.
-//    if ( ! $_POST['my_field_name'] )
-//        wc_add_notice( __( $_POST['CreditInstallment'] . 'Please enter something into this new shiny field.' ), 'error' );
-//}
 
-
-
-//print "<br> <br><br><br><br><br> This is the path of the files path " . ABSPATH;
-//print "<pre>";
-//print_r($_SERVER);
-//print "</pre>";
-//exit;
 
 require_once(ABSPATH . "/wp-includes/user.php");
 require_once(ABSPATH . "/wp-includes/pluggable.php");
 require_once(ABSPATH . "/wp-content/plugins/Spgateway/helper.php" );
 
 
-//exit;
-
-
-
-
-
-
-
-// Hook in
-//add_filter( 'woocommerce_checkout_fields' , 'set_input_attrs' );
-//
-//// Our hooked in function - $fields is passed via the filter!
-//function set_input_attrs( $fields ) {
-//    $fields['billing']['billing_email']['type'] = 'email';
-//    $fields['billing']['billing_phone']['type'] = 'tel';
-//    $fields['billing']['billing_postcode']['type'] = 'tel';
-//    $fields['shipping']['shipping_postcode']['type'] = 'tel';
-//
-//    return $fields;
-//}
-//
-
-//
-//add_action("woocommerce_before_checkout_form", "custom_before_checkout_action");
-//function custom_before_checkout_action() {
-////    if (isset($_GET["quote"]) && $_GET["quote"] == "1") {
-////        echo '<h2>Request for Quote</h2>';
-////        WC()->session->set("quote","true");
-////    }
-////    else {
-////        WC()->session->set("quote","false");
-////        echo '<h2>Buy Sample</h2>';
-////    }
-//}
-//
-//add_filter('woocommerce_available_payment_gateways','filter_gateways',1);
-//function filter_gateways($gateways){
-//
-//    if (WC()->session->get("quote") == "true")
-//        unset($gateways['bacs']);
-//    else
-//        unset($gateways['cod']);
-//
-//    return $gateways;
-//}
-////
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-//
-//function kia_filter_checkout_fields($fields){
-//    $fields['extra_fields'] = array(
-//        'some_field' => array(
-//            'type' => 'text',
-//            'required'      => true,
-//            'label' => __( 'Some field' )
-//        ),
-//        'another_field' => array(
-//            'type' => 'select',
-//            'options' => array( 'a' => __( 'apple' ), 'b' => __( 'bacon' ), 'c' => __( 'chocolate' ) ),
-//            'required'      => true,
-//            'label' => __( 'Another field' )
-//        )
-//    );
-//
-//    return $fields;
-//}
-//add_filter( 'woocommerce_checkout_fields', 'kia_filter_checkout_fields');
-//
-//
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 add_action('plugins_loaded', 'spgateway_gateway_init', 0);
 
-add_action('phpmailer_init', 'spg_mailtrap');
-
-
-function spg_mailtrap($phpmailer) {
-     $phpmailer->isSMTP();
-     $phpmailer->Host = 'mailtrap.io';
-     $phpmailer->SMTPAuth = true;
-     $phpmailer->Port = 2525;
-     $phpmailer->Username = 'a2b98b4b2ea114';
-     $phpmailer->Password = '793807e9810e6f';
-}
 
 function spgateway_gateway_init() {
 
@@ -572,17 +438,22 @@ function spgateway_gateway_init() {
             //                print " test " . $value['product_id'];
             //            }
             // get setup return url for sendright
-//            $spgateway_args['ReturnURL'] = spgateway_set_return_url(['itemName'=>$item_name, 'sendRightKeyWord'=>$sendRightKeyWord, 'orderId'=>$order_id]);
+            //            $spgateway_args['ReturnURL'] = spgateway_set_return_url(['itemName'=>$item_name, 'sendRightKeyWord'=>$sendRightKeyWord, 'orderId'=>$order_id]);
             $spgateway_args['ReturnURL'] = '';
             // create user's account
-            $customerInfo = spgateway_get_customer_info($order_id);
-            $status = spgateway_createNewWpUser( [
-                'first_name'=>$customerInfo['firstName'],
-                'last_name'=> $customerInfo['lastName'],
-                'user_email'=>$customerInfo['email'],
-                'user_login' =>$customerInfo['email'],
-                'display_name'=>$customerInfo['firstName'] . ' ' . $customerInfo['lastName']
-            ]);
+
+
+
+            // Create new wp user if not exist
+            spgateway_createNewWpUser($order_id);
+
+            // Assign member to a wishlist membership level
+            spgateway_cc_assignment_to_membership_level(get_user_by( 'email', spgateway_get_customer_info($order_id)['email'] )->data->ID, $spgateway_args['Pid1'] );
+
+
+            // add to
+
+
 
 
             //            $pa_koostis_value = get_post_meta($product->id);
@@ -599,10 +470,19 @@ function spgateway_gateway_init() {
             $_SESSION['spgateway_args'] = $spgateway_args;
 
 
-            //            print_r($_POST);
+            // print_r($_POST);
+//            print "<pre>";
+//            print_r($spgateway_args);
+//            print "</pre>";
+//            exit;
 
 
-            $this->productId = $spgateway_args['Pid1'];
+
+
+
+
+
+            //            exit;
 
             //            if(!empty($this->spgateway_get_installments($spgateway_args['Pid1'])) and count($_POST) < 1) {
             //                //
@@ -936,23 +816,10 @@ function spgateway_checkout_field_process() {
     $_SESSION['spgateway_payment_gateway_installment_choice'] = $_POST['spgateway_cc_installment_pay'];
 
     /// show an error if something wrong in the field, lets put the session so that we can see the data in the post
-    if(!$_POST['spgateway_cc_installment_pay']) {
-        wc_add_notice(__('Please select installment plan!'), 'error');
-    }
+    //    if(!$_POST['spgateway_cc_installment_pay']) {
+    //        wc_add_notice(__('Please select installment plan!'), 'error');
+    //    }
 
 }
 
-
-/**
- * Proper way to enqueue scripts and styles.
- */
-//function spgateway_scripts() {
-//    wp_enqueue_script( 'spgateway-jquery-cdn', 'https://code.jquery.com/jquery-3.1.1.min.js', array(), '1.0.0', true );
-//    wp_enqueue_script( 'spgateway-jquery-custom', 'http://google-calendar.hopto.org/wp-content/plugins/Spgateway/public/js/custom_jquery.js', array(), '1.0.0', true );
-//}
-//add_action( 'wp_enqueue_scripts', 'spgateway_scripts' );
-//
-
-
-?>
 

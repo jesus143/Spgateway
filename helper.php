@@ -1,11 +1,32 @@
 <?php
 
-//print "<h1> This is helper</h1>";
-
-
-
-function spgateway_createNewWpUser($data)
+/**
+ * Assign member to a specific membership level list
+ * @param $userId
+ * @param $productId
+ */
+function spgateway_cc_assignment_to_membership_level($userId, $productId)
 {
+    $wishlistMemberLevel = get_post_meta($productId, 'wishlist_level', true);
+    $wlmapi = new WLMAPI();
+    $wlmapi->AddUserLevels($userId, $wishlistMemberLevel);
+}
+
+/**
+ * create new order based on order and billing address
+ * @param $customerInfo
+ * @return mixed
+ */
+function spgateway_createNewWpUser($order_id)
+{
+    $customerInfo = spgateway_get_customer_info($order_id);
+    $data = [
+        'first_name'=>$customerInfo['firstName'],
+        'last_name'=> $customerInfo['lastName'],
+        'user_email'=>$customerInfo['email'],
+        'user_login' =>$customerInfo['email'],
+        'display_name'=>$customerInfo['firstName'] . ' ' . $customerInfo['lastName']
+    ];
    return wp_insert_user($data);
 }
 

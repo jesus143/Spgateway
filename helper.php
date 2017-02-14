@@ -38,7 +38,19 @@ function spgateway_get_customer_info($orderId)
     $sql = 'SELECT * FROM `'. $table . '` WHERE post_id = '. $order_id;
     $result = $wpdb->get_results($sql);
     $user = [];
+
+//    print "<pre>";
+//        print_r($result);
+//    print "</pre>";
+
+
+//    exit;
     foreach($result as $res) {
+
+
+        if( $res->meta_key == '_billing_uniform_numbers'){
+            $user['billing_uniform_numbers'] = $res->meta_value;      // get billing phone
+        }
         if( $res->meta_key == '_billing_email'){
             $user['email'] = $res->meta_value;      // get billing phone
         }

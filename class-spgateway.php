@@ -471,18 +471,17 @@ function spgateway_gateway_init() {
 
             $spgateway_args['ReturnURL'] = get_site_url() . '/spgateway-payment-response';
 
-                        // print_r($_POST);
+            $spgateway_args['NotifyURL'] = get_site_url() . '/spgateway-notify-url-request/?order_id='.$order_id;
+
+            //            print_r($_POST);
             //            print "<pre>";
             //            print_r($spgateway_args);
             //            print "</pre>";
+
+
+            //                        exit;
+            //        exit;
             //            exit;
-
-
-
-
-
-            //            exit;
-
             //            if(!empty($this->spgateway_get_installments($spgateway_args['Pid1'])) and count($_POST) < 1) {
             //                //
             //                print "<b>Please select your installment plan.</b><br>";
@@ -525,9 +524,9 @@ function spgateway_gateway_init() {
                 $spgateway_args_array[] = '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '" />';
             }
 
-            return '<form id="spgateway" name="spgateway" action=" ' . $spgateway_gateway . ' " method="post" target="_top">' . implode('', $spgateway_args_array) . '
+            return '<form accept-charset="ISO-8859-1" id="spgateway" name="spgateway" action=" ' . $spgateway_gateway . ' " method="post" target="_top">' . implode('', $spgateway_args_array) . '
   				    <input type="submit" class="button-alt" id="submit_spgateway_payment_form" value="' . __('前往 spgateway 支付頁面', 'spgateway') . '" />
-  				    </form>' . "<script>setTimeout(\"document.forms['spgateway'].submit();\",\"100\")</script>";
+  				    </form>' .  "<script>setTimeout(\"document.forms['spgateway'].submit();\",\"100\")</script>";
         }
 
 

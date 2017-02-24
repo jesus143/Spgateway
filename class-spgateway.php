@@ -442,20 +442,16 @@ function spgateway_gateway_init() {
             $spgateway_args['ReturnURL'] = '';
             // create user's account
 
-
-
             // Create new wp user if not exist
-            spgateway_createNewWpUser($order_id);
+            $_SESSION['new_user']['user_id']  =  spgateway_createNewWpUser($order_id);
 
+//            print " new user id " . $_SESSION['new_user']['user_id'];
+
+            //            exit;
             // Assign member to a wishlist membership level
             spgateway_cc_assignment_to_membership_level(get_user_by( 'email', spgateway_get_customer_info($order_id)['email'] )->data->ID, $spgateway_args['Pid1'] );
 
-
             // add to
-
-
-
-
             //            $pa_koostis_value = get_post_meta($product->id);
 
 
